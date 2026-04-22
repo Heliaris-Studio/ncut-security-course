@@ -1,0 +1,428 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { parseQuizData } from '../lib/parse-quiz';
+
+const quizData = parseQuizData();
+---
+
+<Layout title="資訊安全導論 — 題庫總覽">
+  <script type="application/json" id="bank-data" set:html={JSON.stringify(quizData)} />
+
+  <div class="container">
+    <header class="app-header">
+      <h1>題庫總覽</h1>
+      <p>共 {quizData.questions.length} 題，{quizData.chapters.length} 個章節</p>
+      <a href="/" class="btn btn-secondary back-link">
+        <svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10L12 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        回到測驗
+      </a>
+    </header>
+
+    <div class="chapter-nav" id="chapter-nav">
+      <button class="chapter-nav-link active" data-ch="all">全部</button>
+      {quizData.chapters.map(ch => (
+        <button class="chapter-nav-link" data-ch={ch.id}>
+          CH {String(ch.id).padStart(2, '0')}
+          <span class="nav-count">{ch.questionCount}</span>
+        </button>
+      ))}
+    </div>
+
+    <div id="question-list" class="question-list"></div>
+
+    <div class="pagination" id="pagination"></div>
+  </div>
+</Layout>
+
+<style is:global>
+  .back-link {
+    margin-top: var(--space-4);
+    text-decoration: none;
+    font-size: 0.8125rem;
+  }
+
+  .chapter-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+    position: sticky;
+    top: 0;
+    background: var(--color-bg);
+    padding: var(--space-3) 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .chapter-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-neutral-600);
+    background: var(--color-surface);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+  }
+  .chapter-nav-link:hover {
+    border-color: var(--color-primary-500);
+    color: var(--color-primary-600);
+  }
+  .chapter-nav-link.active {
+    background: var(--color-primary-600);
+    border-color: var(--color-primary-600);
+    color: #fff;
+  }
+  .chapter-nav-link.active .nav-count {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+  .nav-count {
+    font-size: 0.6875rem;
+    background: var(--color-neutral-100);
+    color: var(--color-neutral-500);
+    padding: 0 var(--space-2);
+    border-radius: 9999px;
+  }
+
+  .question-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-height: 200px;
+  }
+
+  .bank-question {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4) var(--space-5);
+  }
+  .bank-q-header {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+  .bank-q-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    background: var(--color-neutral-100);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-neutral-600);
+    flex-shrink: 0;
+  }
+  .bank-q-chapter {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-primary-600);
+    background: var(--color-primary-50);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
+  .bank-q-text {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-neutral-800);
+    line-height: 1.6;
+    padding-top: 2px;
+  }
+
+  .bank-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+    margin-left: 40px;
+  }
+  .bank-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.8125rem;
+    color: var(--color-neutral-500);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+  }
+  .bank-option.is-answer {
+    background: var(--color-success-50);
+    color: var(--color-success-600);
+    font-weight: 600;
+  }
+  .bank-opt-label {
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .pagination {
+    margin-top: var(--space-8);
+    padding-bottom: var(--space-8);
+  }
+  .page-bar {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4) var(--space-6);
+  }
+  .page-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .page-summary-text {
+    font-size: 0.8125rem;
+    color: var(--color-neutral-500);
+  }
+  .page-summary-text strong {
+    color: var(--color-neutral-800);
+    font-weight: 600;
+  }
+  .page-summary-total {
+    font-size: 0.75rem;
+    color: var(--color-neutral-400);
+  }
+  .page-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+  }
+  .page-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 var(--space-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: transparent;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-neutral-600);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: background var(--transition-fast), color var(--transition-fast);
+  }
+  .page-btn:hover:not(:disabled):not(.active) {
+    background: var(--color-neutral-100);
+  }
+  .page-btn.active {
+    background: var(--color-primary-600);
+    color: #fff;
+    border-color: var(--color-primary-600);
+  }
+  .page-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .page-ellipsis {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.8125rem;
+    color: var(--color-neutral-400);
+    letter-spacing: 0.1em;
+  }
+
+  @media (max-width: 640px) {
+    .bank-question {
+      padding: var(--space-3) var(--space-4);
+    }
+    .bank-q-header {
+      flex-wrap: wrap;
+      gap: var(--space-1) var(--space-2);
+      align-items: center;
+    }
+    .bank-q-num {
+      min-width: 24px;
+      height: 24px;
+      font-size: 0.75rem;
+    }
+    .bank-q-chapter {
+      font-size: 0.6875rem;
+      padding: 2px var(--space-2);
+    }
+    .bank-q-text {
+      font-size: 0.875rem;
+      width: 100%;
+      padding-top: var(--space-1);
+    }
+    .bank-options {
+      grid-template-columns: 1fr;
+      margin-left: 0;
+      gap: 0;
+    }
+    .bank-option {
+      font-size: 0.8125rem;
+      padding: var(--space-1) var(--space-2);
+    }
+    .chapter-nav {
+      gap: var(--space-1);
+    }
+    .chapter-nav-link {
+      font-size: 0.75rem;
+      padding: var(--space-1) var(--space-2);
+    }
+    .page-summary {
+      flex-direction: column;
+      gap: var(--space-1);
+      text-align: center;
+    }
+    .page-buttons {
+      flex-wrap: wrap;
+      gap: var(--space-1);
+    }
+    .page-btn {
+      min-width: 32px;
+      height: 32px;
+      font-size: 0.75rem;
+    }
+  }
+</style>
+
+<script>
+  const dataEl = document.getElementById('bank-data')!;
+  const data = JSON.parse(dataEl.textContent!);
+  const labels = ['A', 'B', 'C', 'D'];
+  const PAGE_SIZE = 25;
+
+  const listEl = document.getElementById('question-list')!;
+  const paginationEl = document.getElementById('pagination')!;
+  const navBtns = document.querySelectorAll<HTMLButtonElement>('.chapter-nav-link');
+
+  let currentChapter: string | number = 'all';
+  let currentPage = 1;
+
+  function getFiltered() {
+    if (currentChapter === 'all') return data.questions;
+    return data.questions.filter((q: any) => q.chapterId === Number(currentChapter));
+  }
+
+  function escapeHtml(text: string): string {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+  }
+
+  function render() {
+    const filtered = getFiltered();
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const page = filtered.slice(start, start + PAGE_SIZE);
+
+    listEl.innerHTML = page.map((q: any, i: number) => {
+      const num = start + i + 1;
+      return `
+        <div class="bank-question">
+          <div class="bank-q-header">
+            <span class="bank-q-num">${num}</span>
+            ${currentChapter === 'all' ? `<span class="bank-q-chapter">CH ${String(q.chapterId).padStart(2, '0')}</span>` : ''}
+            <span class="bank-q-text">${escapeHtml(q.question)}</span>
+          </div>
+          <div class="bank-options">
+            ${q.options.map((opt: string, oi: number) => `
+              <div class="bank-option ${oi + 1 === q.answer ? 'is-answer' : ''}">
+                <span class="bank-opt-label">${labels[oi]}.</span>
+                <span>${escapeHtml(opt)}</span>
+                ${oi + 1 === q.answer
+                  ? '<svg width="14" height="14" viewBox="0 0 20 20" fill="none" style="margin-left:auto"><path d="M4 10.5L8 14.5L16 5.5" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+                  : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    renderPagination(totalPages, filtered.length);
+  }
+
+  function renderPagination(totalPages: number, total: number) {
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end = Math.min(currentPage * PAGE_SIZE, total);
+
+    let html = '<div class="page-bar">';
+    html += `<div class="page-summary">
+      <span class="page-summary-text">第 <strong>${start}</strong> - <strong>${end}</strong> 題</span>
+      <span class="page-summary-total">共 ${total} 題 / ${totalPages} 頁</span>
+    </div>`;
+
+    if (totalPages > 1) {
+      html += '<div class="page-buttons">';
+      html += `<button class="page-btn" data-page="prev" ${currentPage <= 1 ? 'disabled' : ''}>
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10L12 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>`;
+
+      const pages = getPageNumbers(currentPage, totalPages);
+      for (const p of pages) {
+        if (p === '...') {
+          html += '<span class="page-ellipsis">...</span>';
+        } else {
+          html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+        }
+      }
+
+      html += `<button class="page-btn" data-page="next" ${currentPage >= totalPages ? 'disabled' : ''}>
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M8 4L14 10L8 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>`;
+      html += '</div>';
+    }
+
+    html += '</div>';
+    paginationEl.innerHTML = html;
+  }
+
+  function getPageNumbers(current: number, total: number): (number | '...')[] {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages: (number | '...')[] = [1];
+    const range = 1;
+    const left = Math.max(2, current - range);
+    const right = Math.min(total - 1, current + range);
+    if (left > 2) pages.push('...');
+    for (let i = left; i <= right; i++) pages.push(i);
+    if (right < total - 1) pages.push('...');
+    pages.push(total);
+    return pages;
+  }
+
+  // Chapter nav clicks
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      navBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentChapter = btn.dataset.ch === 'all' ? 'all' : Number(btn.dataset.ch);
+      currentPage = 1;
+      render();
+    });
+  });
+
+  // Pagination clicks (delegated)
+  paginationEl.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.page-btn') as HTMLButtonElement;
+    if (!btn) return;
+    const val = btn.dataset.page;
+    if (val === 'prev') currentPage--;
+    else if (val === 'next') currentPage++;
+    else currentPage = Number(val);
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  render();
+</script>
