@@ -1,0 +1,65 @@
+---
+interface Props {
+  name: string;
+  class?: string;
+}
+
+const { name, class: className = '' } = Astro.props;
+---
+
+{name === 'check' && (
+  <svg class={`icon ${className}`} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.15" />
+    <path d="M6.5 10.5L8.5 12.5L13.5 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+)}
+
+{name === 'x' && (
+  <svg class={`icon ${className}`} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.15" />
+    <path d="M7 7L13 13M13 7L7 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+  </svg>
+)}
+
+{name === 'arrow-right' && (
+  <svg class={`icon ${className}`} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+)}
+
+{name === 'rotate' && (
+  <svg class={`icon ${className}`} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 10C3 6.13401 6.13401 3 10 3C13.168 3 15.837 5.103 16.673 8M17 10C17 13.866 13.866 17 10 17C6.832 3 4.163 14.897 3.327 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M16.673 8H13.5M16.673 8V4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+)}
+
+{name === 'home' && (
+  <svg class={`icon ${className}`} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 10L10 3L17 10M5 8.5V16H8V12H12V16H15V8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+)}
+
+{name === 'book' && (
+  <svg class={`icon ${className}`} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 3.5C3 3.5 5 2 10 2C15 2 17 3.5 17 3.5V16.5C17 16.5 15 15 10 15C5 15 3 16.5 3 16.5V3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M3 16.5C3 16.5 5 15 10 15C15 15 17 16.5 17 16.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+    <path d="M10 2V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+  </svg>
+)}
+
+{name === 'trophy' && (
+  <svg class={`icon ${className}`} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M6 3H14V9C14 11.2091 12.2091 13 10 13C7.79086 13 6 11.2091 6 9V3Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M6 5H3.5C3.5 5 3 7 3.5 8.5C4 10 6 10 6 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+    <path d="M14 5H16.5C16.5 5 17 7 16.5 8.5C16 10 14 10 14 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+    <path d="M8 17H12M10 13V17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+    <path d="M7 17H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+  </svg>
+)}
+
+{name === 'hash' && (
+  <svg class={`icon ${className}`} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M7 3L5 17M15 3L13 17M3 7H17M3 13H17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+  </svg>
+)}

@@ -1,11 +1,82 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
+import Icons from '../components/Icons.astro';
+import { parseQuizData } from '../lib/parse-quiz';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const quizData = parseQuizData();
+const totalQuestions = quizData.questions.length;
 ---
 
 <Layout>
-	<Welcome />
+  <script type="application/json" id="quiz-data" set:html={JSON.stringify(quizData)} />
+
+  <div class="container">
+    <!-- ===== Phase 1: SETUP ===== -->
+    <section id="setup-phase" class="phase active">
+      <header class="app-header">
+        <h1>資訊安全導論</h1>
+        <p>期中考複習測驗 — 選擇章節與題數，開始練習</p>
+      </header>
+
+      <div class="chapter-grid">
+        <!-- All Chapters card -->
+        <button class="chapter-card" data-chapter="all">
+          <span class="chapter-badge">
+            <Icons name="book" />
+            全部章節
+          </span>
+          <span class="chapter-name">混合所有章節</span>
+          <span class="chapter-count">{totalQuestions} 題</span>
+        </button>
+
+        {quizData.chapters.map(ch => (
+          <button class="chapter-card" data-chapter={ch.id}>
+            <span class="chapter-badge">
+              <Icons name="book" />
+              CH {String(ch.id).padStart(2, '0')}
+            </span>
+            <span class="chapter-name">{ch.name}</span>
+            <span class="chapter-count">{ch.questionCount} 題</span>
+          </button>
+        ))}
+      </div>
+
+      <div class="quiz-config">
+        <label for="question-count">
+          <Icons name="hash" />
+          測驗題數
+        </label>
+        <input type="number" id="question-count" min="1" max={totalQuestions} value="10" />
+        <span class="hint" id="count-hint">（最多 <span id="max-count">{totalQuestions}</span> 題）</span>
+      </div>
+
+      <button id="start-btn" class="btn btn-primary" disabled>
+        選擇章節以開始
+      </button>
+    </section>
+
+    <!-- ===== Phase 2: ANSWERING ===== -->
+    <section id="quiz-phase" class="phase">
+      <div class="quiz-header">
+        <button class="btn btn-back" id="back-home-btn" title="返回首頁">
+          <svg class="icon" viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3L17 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 8.5V16H8V12H12V16H15V8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="progress-wrapper">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <span class="question-counter" id="question-counter">1 / 10</span>
+      </div>
+      <div id="question-container"></div>
+      <div class="quiz-footer" id="quiz-footer"></div>
+    </section>
+
+    <!-- ===== Phase 3: RESULTS ===== -->
+    <section id="results-phase" class="phase">
+      <div id="results-container"></div>
+    </section>
+  </div>
+
+  <script>
+    import '../scripts/quiz';
+  </script>
 </Layout>
