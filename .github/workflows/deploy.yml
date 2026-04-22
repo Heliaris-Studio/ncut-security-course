@@ -14,6 +14,9 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     name: Build
@@ -43,8 +46,7 @@ jobs:
       - name: Build with Astro
         run: |
           pnpm astro build \
-            --site "${{ steps.pages.outputs.origin }}" \
-            --base "${{ steps.pages.outputs.base_path }}"
+            --site "${{ steps.pages.outputs.origin }}"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
