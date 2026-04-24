@@ -28,6 +28,22 @@ const quizData = parseQuizData();
       ))}
     </div>
 
+    <div class="search-bar">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.8"/><path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input
+        type="search"
+        id="search-input"
+        class="search-input"
+        placeholder="搜尋題目或選項關鍵字（按 Esc 清除）"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button type="button" id="search-clear" class="search-clear" aria-label="清除搜尋" hidden>
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6 6L14 14M14 6L6 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span id="search-stats" class="search-stats" hidden></span>
+    </div>
+
     <div id="question-list" class="question-list"></div>
 
     <div class="pagination" id="pagination"></div>
@@ -87,6 +103,102 @@ const quizData = parseQuizData();
     color: var(--color-neutral-500);
     padding: 0 var(--space-2);
     border-radius: 9999px;
+  }
+
+  .search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 0 var(--space-3);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+  .search-bar:focus-within {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px var(--color-primary-50);
+  }
+  .search-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--color-neutral-400);
+    flex-shrink: 0;
+  }
+  .search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    color: var(--color-neutral-800);
+    padding: var(--space-3) 0;
+    min-width: 0;
+  }
+  .search-input::placeholder {
+    color: var(--color-neutral-400);
+  }
+  .search-input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .search-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 9999px;
+    background: var(--color-neutral-100);
+    color: var(--color-neutral-500);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background var(--transition-fast), color var(--transition-fast);
+  }
+  .search-clear svg {
+    width: 14px;
+    height: 14px;
+  }
+  .search-clear:hover {
+    background: var(--color-neutral-200);
+    color: var(--color-neutral-700);
+  }
+  .search-stats {
+    font-size: 0.75rem;
+    color: var(--color-neutral-500);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .bank-q-text mark,
+  .bank-option mark {
+    background: #fef08a;
+    color: inherit;
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+    color: var(--color-neutral-500);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
+  .empty-state-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-neutral-700);
+    margin-bottom: var(--space-1);
+  }
+  .empty-state-hint {
+    font-size: 0.8125rem;
   }
 
   .question-list {
@@ -291,6 +403,13 @@ const quizData = parseQuizData();
       height: 32px;
       font-size: 0.75rem;
     }
+    .search-input {
+      font-size: 0.875rem;
+      padding: var(--space-2) 0;
+    }
+    .search-stats {
+      display: none;
+    }
   }
 </style>
 
@@ -303,13 +422,27 @@ const quizData = parseQuizData();
   const listEl = document.getElementById('question-list')!;
   const paginationEl = document.getElementById('pagination')!;
   const navBtns = document.querySelectorAll<HTMLButtonElement>('.chapter-nav-link');
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const searchClear = document.getElementById('search-clear') as HTMLButtonElement;
+  const searchStats = document.getElementById('search-stats') as HTMLSpanElement;
 
   let currentChapter: string | number = 'all';
   let currentPage = 1;
+  let searchQuery = '';
 
   function getFiltered() {
-    if (currentChapter === 'all') return data.questions;
-    return data.questions.filter((q: any) => q.chapterId === Number(currentChapter));
+    let list = currentChapter === 'all'
+      ? data.questions
+      : data.questions.filter((q: any) => q.chapterId === Number(currentChapter));
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((item: any) => {
+        if (item.question.toLowerCase().includes(q)) return true;
+        return item.options.some((o: string) => o.toLowerCase().includes(q));
+      });
+    }
+    return list;
   }
 
   function escapeHtml(text: string): string {
@@ -318,10 +451,30 @@ const quizData = parseQuizData();
     return d.innerHTML;
   }
 
+  function highlight(text: string): string {
+    const safe = escapeHtml(text);
+    if (!searchQuery) return safe;
+    const esc = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return safe.replace(new RegExp(esc, 'gi'), m => `<mark>${m}</mark>`);
+  }
+
   function render() {
     const filtered = getFiltered();
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     if (currentPage > totalPages) currentPage = totalPages;
+
+    updateSearchStats(filtered.length);
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-title">沒有符合的題目</div>
+          <div class="empty-state-hint">${searchQuery ? '試試其他關鍵字或切換章節' : '此章節目前沒有題目'}</div>
+        </div>
+      `;
+      paginationEl.innerHTML = '';
+      return;
+    }
 
     const start = (currentPage - 1) * PAGE_SIZE;
     const page = filtered.slice(start, start + PAGE_SIZE);
@@ -333,13 +486,13 @@ const quizData = parseQuizData();
           <div class="bank-q-header">
             <span class="bank-q-num">${num}</span>
             ${currentChapter === 'all' ? `<span class="bank-q-chapter">CH ${String(q.chapterId).padStart(2, '0')}</span>` : ''}
-            <span class="bank-q-text">${escapeHtml(q.question)}</span>
+            <span class="bank-q-text">${highlight(q.question)}</span>
           </div>
           <div class="bank-options">
             ${q.options.map((opt: string, oi: number) => `
               <div class="bank-option ${oi + 1 === q.answer ? 'is-answer' : ''}">
                 <span class="bank-opt-label">${labels[oi]}.</span>
-                <span>${escapeHtml(opt)}</span>
+                <span>${highlight(opt)}</span>
                 ${oi + 1 === q.answer
                   ? '<svg width="14" height="14" viewBox="0 0 20 20" fill="none" style="margin-left:auto"><path d="M4 10.5L8 14.5L16 5.5" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
                   : ''}
@@ -351,6 +504,17 @@ const quizData = parseQuizData();
     }).join('');
 
     renderPagination(totalPages, filtered.length);
+  }
+
+  function updateSearchStats(count: number) {
+    if (searchQuery) {
+      searchStats.hidden = false;
+      searchStats.textContent = `找到 ${count} 題`;
+      searchClear.hidden = false;
+    } else {
+      searchStats.hidden = true;
+      searchClear.hidden = true;
+    }
   }
 
   function renderPagination(totalPages: number, total: number) {
@@ -422,6 +586,35 @@ const quizData = parseQuizData();
     else currentPage = Number(val);
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Search input (debounced)
+  let searchTimer: number | undefined;
+  searchInput.addEventListener('input', () => {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => {
+      searchQuery = searchInput.value.trim();
+      currentPage = 1;
+      render();
+    }, 150);
+  });
+
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && searchInput.value) {
+      e.preventDefault();
+      searchInput.value = '';
+      searchQuery = '';
+      currentPage = 1;
+      render();
+    }
+  });
+
+  searchClear.addEventListener('click', () => {
+    searchInput.value = '';
+    searchQuery = '';
+    currentPage = 1;
+    render();
+    searchInput.focus();
   });
 
   render();
